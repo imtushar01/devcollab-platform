@@ -1,0 +1,7 @@
+{
+  "name": "devcollab-platform",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}
