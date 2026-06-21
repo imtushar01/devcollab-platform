@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { RepositoriesModule } from './repositories/repositories.module';
+import { PullRequestsModule } from './pull-requests/pull-requests.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RepositoriesModule } from './repositories/repositories.module';
     AuthModule,
     OrganizationsModule,
     RepositoriesModule,
+    PullRequestsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
