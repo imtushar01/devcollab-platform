@@ -2,6 +2,7 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import { PG_POOL, REDIS_CLIENT } from '../database/database.module';
+import { RateLimit } from '../common/guards/rate-limit.guard';
 
 @Controller('health')
 export class HealthController {
@@ -11,6 +12,7 @@ export class HealthController {
   ) {}
 
   @Get()
+  @RateLimit({ windowMs: 10 * 1000, max: 5, keyPrefix: 'health' })
   async check() {
     const status = { postgres: 'unknown', redis: 'unknown' };
     try {

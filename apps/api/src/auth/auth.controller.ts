@@ -4,12 +4,14 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RateLimit } from '../common/guards/rate-limit.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @RateLimit({ windowMs: 60 * 60 * 1000, max: 5, keyPrefix: 'register' })
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.register(dto.email, dto.password);
     return this.respond(tokens, res);
@@ -17,6 +19,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @RateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: 'login' })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.login(dto.email, dto.password);
     return this.respond(tokens, res);
