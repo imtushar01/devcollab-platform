@@ -6,6 +6,8 @@ import { assertMergeable, assertValidTransition, PrStatus } from './pr-state-mac
 import { CreatePrDto } from './dto/create-pr.dto';
 import { SubmitReviewDto } from './dto/submit-review.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PrReviewSubmittedEvent } from '../events/platform.events';
 
 @Injectable()
 export class PullRequestsService {
@@ -13,6 +15,7 @@ export class PullRequestsService {
     private readonly prsRepo: PullRequestsRepository,
     private readonly reposService: RepositoriesService,
     private readonly orgsService: OrganizationsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(orgHandle: string, repoName: string, dto: CreatePrDto, userId: string) {
@@ -68,7 +71,14 @@ export class PullRequestsService {
       throw new ForbiddenException('Reviews can only be submitted on open pull requests');
     }
 
-    return this.prsRepo.upsertReview(prId, userId, dto.status, dto.body);
+    const review = await this.prsRepo.upsertReview(prId, userId, dto.status, dto.body);
+
+    this.eventEmitter.emit(
+      'pr.review.submitted',
+      new PrReviewSubmittedEvent(prId, userId, pr.author_id, dto.status),
+    );
+
+    return review;
   }
 
   async addComment(prId: string, dto: CreateCommentDto, userId: string) {
