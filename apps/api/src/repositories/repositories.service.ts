@@ -2,12 +2,14 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { RepositoriesRepository } from './repositories.repository';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { CreateRepoDto } from './dto/create-repo.dto';
+import { SearchService } from '../search/search.service';
 
 @Injectable()
 export class RepositoriesService {
   constructor(
     private readonly reposRepo: RepositoriesRepository,
     private readonly orgsService: OrganizationsService,
+    private readonly searchService: SearchService,
   ) {}
 
   async create(orgHandle: string, dto: CreateRepoDto, userId: string) {
@@ -15,7 +17,18 @@ export class RepositoriesService {
     await this.orgsService.assertMembership(org.id, userId, 'member');
 
     try {
-      return await this.reposRepo.create(org.id, dto.name, dto.description, dto.visibility ?? 'public');
+      const repo = await this.reposRepo.create(org.id, dto.name, dto.description, dto.visibility ?? 'public');
+
+      // fire and forget — don't block the response on indexing
+      this.searchService.indexDocument(
+        'repository',
+        repo.id,
+        repo.name,
+        `${dto.description ?? ''} ${orgHandle}`,
+        { orgHandle, repoName: repo.name, visibility: dto.visibility ?? 'public' },
+      ).catch(err => console.error('Search indexing failed:', err));
+
+      return repo;
     } catch (err: any) {
       if (err.code === '23505') throw new ConflictException(`Repository "${dto.name}" already exists in this organization`);
       throw err;
