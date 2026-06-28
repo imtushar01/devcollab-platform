@@ -15,6 +15,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { SearchModule } from './search/search.module';
+import { ObservabilityModule } from './observability/observability.module'
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { SearchModule } from './search/search.module';
     IssuesModule,
     NotificationsModule,
     SearchModule,
+    ObservabilityModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
