@@ -2,14 +2,14 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { RepositoriesRepository } from './repositories.repository';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { CreateRepoDto } from './dto/create-repo.dto';
-import { SearchService } from '../search/search.service';
+import { QueueService } from '../queue/queue.service';
 
 @Injectable()
 export class RepositoriesService {
   constructor(
     private readonly reposRepo: RepositoriesRepository,
     private readonly orgsService: OrganizationsService,
-    private readonly searchService: SearchService,
+    private readonly queueService: QueueService,
   ) {}
 
   async create(orgHandle: string, dto: CreateRepoDto, userId: string) {
@@ -20,13 +20,15 @@ export class RepositoriesService {
       const repo = await this.reposRepo.create(org.id, dto.name, dto.description, dto.visibility ?? 'public');
 
       // fire and forget — don't block the response on indexing
-      this.searchService.indexDocument(
+      this.queueService.enqueueSearchIndex(
         'repository',
         repo.id,
-        repo.name,
-        `${dto.description ?? ''} ${orgHandle}`,
-        { orgHandle, repoName: repo.name, visibility: dto.visibility ?? 'public' },
-      ).catch(err => console.error('Search indexing failed:', err));
+        {
+          title: repo.name,
+          body: `${dto.description ?? ''} ${orgHandle}`,
+          metadata: { orgHandle, repoName: repo.name, visibility: dto.visibility ?? 'public' },
+        },
+      ).catch(err => console.error('Failed to enqueue search index job:', err));
 
       return repo;
     } catch (err: any) {

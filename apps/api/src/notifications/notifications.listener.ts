@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationsRepository } from './notifications.repository';
+import { QueueService } from '../queue/queue.service';
 import {
   IssueCreatedEvent,
   IssueCommentedEvent,
@@ -9,14 +9,12 @@ import {
 
 @Injectable()
 export class NotificationsListener {
-  constructor(private readonly notificationsRepo: NotificationsRepository) {}
+  constructor(private readonly queueService: QueueService) {}
 
   @OnEvent('issue.created')
   async handleIssueCreated(event: IssueCreatedEvent) {
-    if (!event.assigneeId) return;
-    if (event.assigneeId === event.authorId) return; // don't notify yourself
-
-    await this.notificationsRepo.create(event.assigneeId, 'issue_assigned', {
+    if (!event.assigneeId || event.assigneeId === event.authorId) return;
+    await this.queueService.enqueueNotification(event.assigneeId, 'issue_assigned', {
       issueId: event.issueId,
       title: event.title,
       assignedBy: event.authorId,
@@ -25,9 +23,8 @@ export class NotificationsListener {
 
   @OnEvent('issue.commented')
   async handleIssueCommented(event: IssueCommentedEvent) {
-    if (event.authorId === event.issueAuthorId) return; // don't notify yourself
-
-    await this.notificationsRepo.create(event.issueAuthorId, 'issue_commented', {
+    if (event.authorId === event.issueAuthorId) return;
+    await this.queueService.enqueueNotification(event.issueAuthorId, 'issue_commented', {
       issueId: event.issueId,
       commentId: event.commentId,
       commentedBy: event.authorId,
@@ -37,8 +34,7 @@ export class NotificationsListener {
   @OnEvent('pr.review.submitted')
   async handlePrReview(event: PrReviewSubmittedEvent) {
     if (event.reviewerId === event.prAuthorId) return;
-
-    await this.notificationsRepo.create(event.prAuthorId, 'pr_review_submitted', {
+    await this.queueService.enqueueNotification(event.prAuthorId, 'pr_review_submitted', {
       prId: event.prId,
       reviewStatus: event.reviewStatus,
       reviewedBy: event.reviewerId,

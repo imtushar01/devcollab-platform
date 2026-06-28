@@ -3,10 +3,10 @@ import { RepositoriesController } from './repositories.controller';
 import { RepositoriesService } from './repositories.service';
 import { RepositoriesRepository } from './repositories.repository';
 import { OrganizationsModule } from '../organizations/organizations.module';
-import { SearchModule } from '../search/search.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [OrganizationsModule, SearchModule],
+  imports: [OrganizationsModule, QueueModule],
   controllers: [RepositoriesController],
   providers: [RepositoriesService, RepositoriesRepository],
   exports: [RepositoriesService],

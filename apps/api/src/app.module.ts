@@ -16,6 +16,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { SearchModule } from './search/search.module';
 import { ObservabilityModule } from './observability/observability.module'
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ObservabilityModule } from './observability/observability.module'
     NotificationsModule,
     SearchModule,
     ObservabilityModule,
+    QueueModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
