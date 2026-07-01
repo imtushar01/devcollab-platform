@@ -3,6 +3,8 @@ import { Pool } from 'pg';
 import Redis from 'ioredis';
 import { PG_POOL, REDIS_CLIENT } from '../database/database.module';
 import { tokenize, computeTermFrequencies } from './tokenizer';
+import { CacheService } from '../cache/cache.service';
+import { CacheKeys } from '../cache/cache-keys';
 
 const INDEX_PREFIX = 'search:index';
 const DOC_COUNT_KEY = 'search:doc_count';

@@ -17,6 +17,7 @@ import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { SearchModule } from './search/search.module';
 import { ObservabilityModule } from './observability/observability.module'
 import { QueueModule } from './queue/queue.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { QueueModule } from './queue/queue.module';
     SearchModule,
     ObservabilityModule,
     QueueModule,
+    CacheModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

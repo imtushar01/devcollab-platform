@@ -11,21 +11,38 @@ export class HealthController {
     @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
   ) {}
 
-  @Get()
+ @Get()
   @RateLimit({ windowMs: 10 * 1000, max: 5, keyPrefix: 'health' })
   async check() {
-    const status = { postgres: 'unknown', redis: 'unknown' };
+    const status: Record<string, any> = {
+      postgres: 'unknown',
+      redis: 'unknown',
+      cache: 'unknown',
+    };
+
     try {
       await this.pgPool.query('SELECT 1');
       status.postgres = 'ok';
     } catch {
       status.postgres = 'down';
     }
+
     try {
-      status.redis = (await this.redisClient.ping()) === 'PONG' ? 'ok' : 'down';
+      const pong = await this.redisClient.ping();
+      status.redis = pong === 'PONG' ? 'ok' : 'down';
+
+      // Get Redis memory info for cache health
+      const info = await this.redisClient.info('memory');
+      const memMatch = info.match(/used_memory_human:(\S+)/);
+      status.cache = {
+        status: 'ok',
+        memoryUsed: memMatch?.[1] ?? 'unknown',
+      };
     } catch {
       status.redis = 'down';
+      status.cache = 'down';
     }
+
     return status;
   }
 }
